@@ -124,7 +124,12 @@ function App() {
           {result && step >= 3 && (
             <motion.div ref={sectionRefs[3]} layout className="space-y-6">
               <VectorDisplay docVectors={activeDocVectors} queryVector={activeQueryVector} docLabels={docLabels} />
-              <VectorPlot docVectors={activeDocVectors} queryVector={activeQueryVector} docLabels={docLabels} />
+              <VectorPlot
+                docVectors={activeDocVectors}
+                queryVector={activeQueryVector}
+                docLabels={docLabels}
+                vocabulary={result.vocabulary}
+              />
             </motion.div>
           )}
         </AnimatePresence>
