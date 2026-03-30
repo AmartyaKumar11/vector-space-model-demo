@@ -1,0 +1,45 @@
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap");
+@import "tailwindcss";
+
+:root {
+  font-family: "Plus Jakarta Sans", sans-serif;
+  color: #e2e8f0;
+  background-color: #0f172a;
+  text-rendering: geometricPrecision;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: #0f172a;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.panel-card {
+  @apply rounded-2xl border border-slate-700/60 bg-slate-900/75 p-4 shadow-lg md:p-5;
+}
+
+.panel-title {
+  @apply text-lg font-semibold text-white;
+}
+
+.panel-subtitle {
+  @apply mt-1 text-sm text-slate-300;
+}
+
+.input-area {
+  @apply w-full rounded-xl border border-slate-700 bg-slate-950/80 px-3 py-2 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-blue-400 focus:ring-2 focus:ring-blue-400/30;
+}
+
+.control-button {
+  @apply inline-flex items-center justify-center rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-100 transition hover:border-blue-400 hover:text-blue-200 disabled:cursor-not-allowed disabled:opacity-50;
+}
