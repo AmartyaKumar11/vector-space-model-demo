@@ -171,11 +171,7 @@ export default function VectorPlot({ docVectors, queryVector, docLabels }) {
     }
 
     setSelectedVector((current) => {
-      if (!current) {
-        return docPoints[0].label;
-      }
-
-      return docPoints.some((point) => point.label === current) ? current : docPoints[0].label;
+      return docPoints.some((point) => point.label === current) ? current : null;
     });
   }, [docPoints]);
 
@@ -268,6 +264,7 @@ export default function VectorPlot({ docVectors, queryVector, docLabels }) {
 
   const handleWheelZoom = (event) => {
     event.preventDefault();
+    event.stopPropagation();
 
     if (!containerRef.current || plotWidth <= 0 || plotHeight <= 0) {
       return;
@@ -299,8 +296,18 @@ export default function VectorPlot({ docVectors, queryVector, docLabels }) {
     setYDomain(clampDomain(nextYMin, nextYMax));
   };
 
+  const handleWheelCapture = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+  };
+
   const handlePanStart = (event) => {
     if (event.button !== 0) {
+      return;
+    }
+
+    // When clicking vector points, selection should win over panning.
+    if (event.target?.closest?.("[data-vector-point='true']")) {
       return;
     }
 
@@ -351,6 +358,9 @@ export default function VectorPlot({ docVectors, queryVector, docLabels }) {
           Angle with Query ({selectedPoint.label}): {angle.toFixed(2)} degrees
         </motion.p>
       )}
+      {!selectedPoint && (
+        <p className="mt-2 text-xs text-slate-300">Click a document vector to show its angle with Query.</p>
+      )}
 
       <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-slate-300">
         <span className="text-slate-200">Wheel: zoom</span>
@@ -371,6 +381,7 @@ export default function VectorPlot({ docVectors, queryVector, docLabels }) {
       <div
         ref={containerRef}
         className={`relative mt-4 h-64 w-full select-none ${isPanning ? "cursor-grabbing" : "cursor-grab"}`}
+        onWheelCapture={handleWheelCapture}
         onWheel={handleWheelZoom}
         onMouseDown={handlePanStart}
         onMouseMove={handlePanMove}
@@ -379,13 +390,15 @@ export default function VectorPlot({ docVectors, queryVector, docLabels }) {
       >
         <ResponsiveContainer>
           <ScatterChart margin={chartMargin}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-            <ReferenceLine x={0} stroke="#475569" strokeDasharray="3 3" />
-            <ReferenceLine y={0} stroke="#475569" strokeDasharray="3 3" />
+            <CartesianGrid strokeDasharray="4 4" stroke="#334155" strokeOpacity={0.35} />
+            <ReferenceLine x={0} stroke="#f8fafc" strokeWidth={2.4} strokeOpacity={0.95} />
+            <ReferenceLine y={0} stroke="#f8fafc" strokeWidth={2.4} strokeOpacity={0.95} />
             <XAxis
               type="number"
               dataKey="x"
               domain={xDomain}
+              axisLine={{ stroke: "#e2e8f0", strokeWidth: 2 }}
+              tickLine={{ stroke: "#cbd5e1", strokeWidth: 1.4 }}
               stroke="#94a3b8"
               tick={{ fill: "#cbd5e1", fontSize: 12 }}
             />
@@ -393,6 +406,8 @@ export default function VectorPlot({ docVectors, queryVector, docLabels }) {
               type="number"
               dataKey="y"
               domain={yDomain}
+              axisLine={{ stroke: "#e2e8f0", strokeWidth: 2 }}
+              tickLine={{ stroke: "#cbd5e1", strokeWidth: 1.4 }}
               stroke="#94a3b8"
               tick={{ fill: "#cbd5e1", fontSize: 12 }}
             />
@@ -445,10 +460,15 @@ export default function VectorPlot({ docVectors, queryVector, docLabels }) {
                   const { cx, cy, payload } = props;
                   const isQuery = payload.type === "query";
                   const isSelected = payload.label === selectedVector;
+                  const showAngleOverDot = isSelected && !isQuery;
                   const radius = isQuery ? 7.5 : isSelected ? 8.5 : 5;
 
                   return (
-                    <g onClick={() => payload.type === "doc" && setSelectedVector(payload.label)}>
+                    <g
+                      data-vector-point="true"
+                      onMouseDown={(event) => event.stopPropagation()}
+                      onClick={() => payload.type === "doc" && setSelectedVector(payload.label)}
+                    >
                       {isQuery && <circle cx={cx} cy={cy} r={11} fill={payload.color} fillOpacity={0.25} />}
                       {isSelected && <circle cx={cx} cy={cy} r={13} fill={payload.color} fillOpacity={0.34} />}
                       <circle
@@ -460,6 +480,18 @@ export default function VectorPlot({ docVectors, queryVector, docLabels }) {
                         strokeWidth={isQuery || isSelected ? 1.8 : 1}
                         style={{ cursor: payload.type === "doc" ? "pointer" : "default" }}
                       />
+                      {showAngleOverDot && (
+                        <text
+                          x={cx}
+                          y={cy - 16}
+                          fill="#fde68a"
+                          fontSize="11"
+                          fontWeight="600"
+                          textAnchor="middle"
+                        >
+                          {angle.toFixed(1)}deg
+                        </text>
+                      )}
                     </g>
                   );
                 }}
@@ -491,7 +523,7 @@ export default function VectorPlot({ docVectors, queryVector, docLabels }) {
                 fontSize="11"
                 textAnchor="middle"
                 style={{
-                  opacity: selectedPoint ? 1 : 0,
+                  opacity: 0,
                   transition: "opacity 250ms ease-in-out",
                 }}
               >
